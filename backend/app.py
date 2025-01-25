@@ -1,11 +1,11 @@
-from flask import Flask, request, jsonify
+from flask import Flask, render_template, request, jsonify
 import csv
 import os
 import uuid
 from flask_cors import CORS
 
 app = Flask(__name__)
-CORS(app)  # تمكين CORS للتواصل مع Frontend
+CORS(app)
 
 # مسار ملف CSV
 CSV_FILE = 'appointments.csv'
@@ -16,7 +16,7 @@ if not os.path.exists(CSV_FILE):
         writer = csv.writer(file)
         writer.writerow(['id', 'الاسم', 'رقم الهاتف', 'النوع', 'العمر', 'التاريخ', 'الوقت', 'الحالة'])
 
-# بيانات تسجيل دخول الإدارة (مثال بسيط)
+# بيانات تسجيل دخول الإدارة
 ADMIN_CREDENTIALS = {
     "username": "admin",
     "password": "admin123"
@@ -45,7 +45,6 @@ def admin_login():
 # API لحجز موعد
 @app.route('/api/book', methods=['POST'])
 def book_appointment():
-    # جمع بيانات النموذج
     data = request.json
     name = data.get('name')
     phone = data.get('phone')
@@ -54,7 +53,6 @@ def book_appointment():
     date = data.get('date')
     time = data.get('time')
 
-    # تحقق من صحة البيانات
     if not all([name, phone, gender, age, date, time]):
         return jsonify({'error': 'جميع الحقول مطلوبة!'}), 400
 
@@ -64,26 +62,22 @@ def book_appointment():
     if not validate_age(age):
         return jsonify({'error': 'العمر غير صحيح!'}), 400
 
-    # إنشاء معرف فريد للموعد
     appointment_id = str(uuid.uuid4())
 
-    # إضافة البيانات إلى ملف CSV
     with open(CSV_FILE, mode='a', newline='', encoding='utf-8') as file:
         writer = csv.writer(file)
         writer.writerow([appointment_id, name, phone, gender, age, date, time, 'معلق'])
 
-    # إرجاع رسالة نجاح
     return jsonify({'message': 'تم حجز الموعد بنجاح!', 'id': appointment_id}), 201
 
-# API لاسترجاع جميع المواعيد (للعيادة)
+# API لاسترجاع جميع المواعيد
 @app.route('/api/admin/appointments', methods=['GET'])
 def get_all_appointments():
     appointments = []
 
-    # قراءة البيانات من ملف CSV
     with open(CSV_FILE, mode='r', encoding='utf-8') as file:
         reader = csv.reader(file)
-        next(reader)  # تخطي الصف الأول (العناوين)
+        next(reader)
         for row in reader:
             appointments.append({
                 'id': row[0],
@@ -96,10 +90,9 @@ def get_all_appointments():
                 'status': row[7]
             })
 
-    # إرجاع البيانات كـ JSON
     return jsonify(appointments), 200
 
-# API لتأكيد أو إلغاء الموعد (للعيادة)
+# API لتأكيد أو إلغاء الموعد
 @app.route('/api/admin/appointments/<appointment_id>', methods=['PUT'])
 def update_appointment_status(appointment_id):
     data = request.json
@@ -107,41 +100,46 @@ def update_appointment_status(appointment_id):
 
     appointments = []
 
-    # قراءة البيانات من ملف CSV
     with open(CSV_FILE, mode='r', encoding='utf-8') as file:
         reader = csv.reader(file)
-        headers = next(reader)  # قراءة العناوين
+        headers = next(reader)
         for row in reader:
-            if row[0] == appointment_id:  # تحديث حالة الموعد
+            if row[0] == appointment_id:
                 row[7] = new_status
             appointments.append(row)
 
-    # إعادة كتابة البيانات إلى ملف CSV
     with open(CSV_FILE, mode='w', newline='', encoding='utf-8') as file:
         writer = csv.writer(file)
-        writer.writerow(headers)  # كتابة العناوين
-        writer.writerows(appointments)  # كتابة البيانات المحدثة
+        writer.writerow(headers)
+        writer.writerows(appointments)
 
-    # إرجاع رسالة نجاح
     return jsonify({'message': 'تم تحديث حالة الموعد بنجاح!'}), 200
 
 # API لحساب زمن المقابلة
 @app.route('/api/waiting-time', methods=['GET'])
 def get_waiting_time():
-    # قراءة البيانات من ملف CSV
     with open(CSV_FILE, mode='r', encoding='utf-8') as file:
         reader = csv.reader(file)
-        next(reader)  # تخطي الصف الأول (العناوين)
+        next(reader)
         appointments = list(reader)
 
-    # عدد المواعيد المحجوزة قبل الموعد الجديد
     num_appointments = len(appointments)
-
-    # افترض أن كل موعد يستغرق 15 دقيقة
     waiting_time_minutes = num_appointments * 15
 
-    # إرجاع زمن المقابلة
     return jsonify({'waiting_time_minutes': waiting_time_minutes}), 200
+
+# تقديم ملفات HTML
+@app.route('/')
+def index():
+    return render_template('index.html')
+
+@app.route('/patient')
+def patient():
+    return render_template('patient/index.html')
+
+@app.route('/admin')
+def admin():
+    return render_template('admin/admin.html')
 
 # تشغيل الخادم
 if __name__ == '__main__':
