@@ -4,7 +4,8 @@ import os
 import uuid
 from flask_cors import CORS
 
-app = Flask(__name__)
+# تهيئة تطبيق Flask مع تحديد مجلد القوالب المخصص
+app = Flask(__name__, template_folder='../frontend/patient')
 CORS(app)
 
 # مسار ملف CSV
@@ -77,7 +78,7 @@ def get_all_appointments():
 
     with open(CSV_FILE, mode='r', encoding='utf-8') as file:
         reader = csv.reader(file)
-        next(reader)
+        next(reader)  # تخطي الصف الأول (العناوين)
         for row in reader:
             appointments.append({
                 'id': row[0],
@@ -102,16 +103,16 @@ def update_appointment_status(appointment_id):
 
     with open(CSV_FILE, mode='r', encoding='utf-8') as file:
         reader = csv.reader(file)
-        headers = next(reader)
+        headers = next(reader)  # قراءة العناوين
         for row in reader:
-            if row[0] == appointment_id:
+            if row[0] == appointment_id:  # تحديث حالة الموعد
                 row[7] = new_status
             appointments.append(row)
 
     with open(CSV_FILE, mode='w', newline='', encoding='utf-8') as file:
         writer = csv.writer(file)
-        writer.writerow(headers)
-        writer.writerows(appointments)
+        writer.writerow(headers)  # كتابة العناوين
+        writer.writerows(appointments)  # كتابة البيانات المحدثة
 
     return jsonify({'message': 'تم تحديث حالة الموعد بنجاح!'}), 200
 
@@ -120,7 +121,7 @@ def update_appointment_status(appointment_id):
 def get_waiting_time():
     with open(CSV_FILE, mode='r', encoding='utf-8') as file:
         reader = csv.reader(file)
-        next(reader)
+        next(reader)  # تخطي الصف الأول (العناوين)
         appointments = list(reader)
 
     num_appointments = len(appointments)
@@ -128,19 +129,22 @@ def get_waiting_time():
 
     return jsonify({'waiting_time_minutes': waiting_time_minutes}), 200
 
-# تقديم ملفات HTML
+# واجهة المريض
 @app.route('/')
 def index():
-    return render_template('index.html')
+    return render_template('index.html')  # ملف index.html في frontend/patient/
 
 @app.route('/patient')
 def patient():
-    return render_template('patient/index.html')
+    return render_template('index.html')  # ملف index.html في frontend/patient/
 
+# واجهة الإدارة
 @app.route('/admin')
 def admin():
-    return render_template('admin/admin.html')
+    # تغيير المسار المؤقت للقوالب إلى frontend/admin/
+    app.template_folder = '../frontend/admin'
+    return render_template('admin.html')  # ملف admin.html في frontend/admin/
 
 # تشغيل الخادم
 if __name__ == '__main__':
-    app.run(debug=True, port=0000)
+        app.run(debug=True, port=0000)
