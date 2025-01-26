@@ -4,7 +4,6 @@ import os
 import uuid
 from flask_cors import CORS
 
-# تهيئة تطبيق Flask مع تحديد مجلد القوالب المخصص
 app = Flask(__name__, template_folder='../frontend/patient')
 CORS(app)
 
@@ -147,4 +146,5 @@ def admin():
 
 # تشغيل الخادم
 if __name__ == '__main__':
-        app.run(debug=True, port=0000)
+    port = int(os.environ.get('PORT', 3000))  # استخدام PORT من متغير البيئة أو 3000 كافتراضي
+    app.run(debug=True, host='0.0.0.0', port=port)
