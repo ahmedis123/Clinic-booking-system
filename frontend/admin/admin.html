@@ -4,7 +4,155 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>إدارة المواعيد - العيادة</title>
-    <link rel="stylesheet" href="styles.css">
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f9f9f9;
+            margin: 0;
+            padding: 0;
+            text-align: right;
+            color: #333;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 20px auto;
+            padding: 30px;
+            background: #fff;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            border-radius: 12px;
+            overflow-x: auto; /* التمرير الأفقي عند الحاجة */
+        }
+
+        h1 {
+            color: #2c3e50;
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 28px;
+            font-weight: 600;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+            min-width: 600px; /* الحد الأدنى لعرض الجدول */
+        }
+
+        th, td {
+            padding: 15px;
+            border: 1px solid #ddd;
+            text-align: center;
+            font-size: 14px;
+        }
+
+        th {
+            background-color: #f8f9fa;
+            font-weight: 600;
+            color: #555;
+        }
+
+        tr:hover {
+            background-color: #f1f1f1;
+            transition: background-color 0.3s ease;
+        }
+
+        .status-pending {
+            color: #ffc107;
+            font-weight: 500;
+        }
+
+        .status-confirmed {
+            color: #28a745;
+            font-weight: 500;
+        }
+
+        .status-cancelled {
+            color: #dc3545;
+            font-weight: 500;
+        }
+
+        button {
+            padding: 10px 15px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background-color 0.3s ease, transform 0.2s ease;
+            margin: 5px;
+        }
+
+        button:hover {
+            transform: scale(1.05);
+        }
+
+        .confirm-button {
+            background-color: #28a745;
+            color: #fff;
+        }
+
+        .confirm-button:hover {
+            background-color: #218838;
+        }
+
+        .cancel-button {
+            background-color: #dc3545;
+            color: #fff;
+        }
+
+        .cancel-button:hover {
+            background-color: #c82333;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 20px;
+            }
+
+            h1 {
+                font-size: 24px;
+            }
+
+            th, td {
+                padding: 10px;
+                font-size: 12px;
+            }
+
+            button {
+                padding: 8px 12px;
+                font-size: 12px;
+            }
+
+            table {
+                min-width: 100%; /* جعل الجدول يتكيف مع عرض الشاشة */
+            }
+
+            /* إخفاء الأعمدة غير الضرورية على الشاشات الصغيرة */
+            th:nth-child(4), td:nth-child(4), /* العمر */
+            th:nth-child(5), td:nth-child(5), /* التاريخ */
+            th:nth-child(6), td:nth-child(6) { /* الوقت */
+                display: none;
+            }
+        }
+
+        @media (max-width: 480px) {
+            th, td {
+                padding: 8px;
+                font-size: 10px;
+            }
+
+            button {
+                padding: 6px 10px;
+                font-size: 10px;
+            }
+
+            /* إخفاء المزيد من الأعمدة على الشاشات الصغيرة جدًا */
+            th:nth-child(3), td:nth-child(3) { /* النوع */
+                display: none;
+            }
+        }
+    </style>
 </head>
 <body>
     <div class="container">
@@ -28,6 +176,61 @@
         </table>
     </div>
 
-    <script src="script.js"></script>
+    <script>
+        const API_URL = 'https://clinic-booking-system-opre.onrender.com:3001/api';
+
+        document.addEventListener('DOMContentLoaded', loadAppointments);
+
+        async function loadAppointments() {
+            try {
+                const response = await fetch(`${API_URL}/admin/appointments`);
+                const appointments = await response.json();
+                const tableBody = document.querySelector('#appointmentsTable tbody');
+                tableBody.innerHTML = '';
+
+                appointments.forEach(appointment => {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td>${appointment.name}</td>
+                        <td>${appointment.phone}</td>
+                        <td>${appointment.gender}</td>
+                        <td>${appointment.age}</td>
+                        <td>${appointment.date}</td>
+                        <td>${appointment.time}</td>
+                        <td class="status-${appointment.status === 'معلق' ? 'pending' : appointment.status === 'مؤكد' ? 'confirmed' : 'cancelled'}">
+                            ${appointment.status}
+                        </td>
+                        <td>
+                            <button class="confirm-button" onclick="updateAppointmentStatus('${appointment.id}', 'مؤكد')">تأكيد</button>
+                            <button class="cancel-button" onclick="updateAppointmentStatus('${appointment.id}', 'ملغى')">إلغاء</button>
+                        </td>
+                    `;
+                    tableBody.appendChild(row);
+                });
+            } catch (error) {
+                console.error('حدث خطأ أثناء تحميل المواعيد:', error);
+            }
+        }
+
+        async function updateAppointmentStatus(id, status) {
+            try {
+                const response = await fetch(`${API_URL}/admin/appointments/${id}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ status }),
+                });
+
+                if (response.ok) {
+                    loadAppointments();
+                } else {
+                    alert('حدث خطأ أثناء تحديث حالة الموعد!');
+                }
+            } catch (error) {
+                console.error('حدث خطأ أثناء تحديث حالة الموعد:', error);
+            }
+        }
+    </script>
 </body>
 </html>
