@@ -92,15 +92,44 @@
             background-color: #218838;
         }
 
+        button:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+        }
+
         #confirmationMessage {
             display: none;
-            background-color: #d4edda;
-            color: #155724;
             padding: 15px;
             border-radius: 6px;
-            margin-top: 10px;
             text-align: center;
             font-size: 14px;
+            margin-top: 10px;
+        }
+
+        .success {
+            background-color: #d4edda;
+            color: #155724;
+        }
+
+        .error {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+
+        .loading-spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #28a745;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto;
+            display: none;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
         }
 
         @media (max-width: 768px) {
@@ -145,14 +174,12 @@
             <label for="time">الوقت:</label>
             <input type="time" id="time" required>
 
-            <button type="submit">احجز الآن</button>
+            <button type="submit" id="submitButton">احجز الآن</button>
+            <div class="loading-spinner" id="loadingSpinner"></div>
         </form>
 
         <!-- رسالة التأكيد -->
-        <div id="confirmationMessage">
-            تم حجز الموعد بنجاح!<br>
-            زمن المقابلة المتوقع: <span id="waitingTime"></span> دقيقة.
-        </div>
+        <div id="confirmationMessage"></div>
     </div>
 
     <script>
@@ -161,43 +188,102 @@
         document.getElementById('bookingForm').addEventListener('submit', async function (e) {
             e.preventDefault();
 
+            const submitButton = document.getElementById('submitButton');
+            const loadingSpinner = document.getElementById('loadingSpinner');
+            const confirmationMessage = document.getElementById('confirmationMessage');
+
+            // تعطيل الزر وإظهار مؤشر التحميل
+            submitButton.disabled = true;
+            submitButton.innerText = 'جارٍ المعالجة...';
+            loadingSpinner.style.display = 'block';
+
+            const name = document.getElementById('name').value;
+            const phone = document.getElementById('phone').value;
+            const age = document.getElementById('age').value;
+            const date = document.getElementById('date').value;
+            const time = document.getElementById('time').value;
+
+            // التحقق من صحة رقم الهاتف
+            if (!/^\d+$/.test(phone)) {
+                alert('رقم الهاتف يجب أن يحتوي على أرقام فقط');
+                submitButton.disabled = false;
+                submitButton.innerText = 'احجز الآن';
+                loadingSpinner.style.display = 'none';
+                return;
+            }
+
+            // التحقق من صحة العمر
+            if (age <= 0 || age > 120) {
+                alert('العمر يجب أن يكون بين 1 و 120');
+                submitButton.disabled = false;
+                submitButton.innerText = 'احجز الآن';
+                loadingSpinner.style.display = 'none';
+                return;
+            }
+
+            // التحقق من أن التاريخ والوقت ليسا في الماضي
+            const selectedDateTime = new Date(`${date}T${time}`);
+            const now = new Date();
+            if (selectedDateTime < now) {
+                alert('الرجاء اختيار تاريخ ووقت في المستقبل');
+                submitButton.disabled = false;
+                submitButton.innerText = 'احجز الآن';
+                loadingSpinner.style.display = 'none';
+                return;
+            }
+
             const data = {
-                name: document.getElementById('name').value,
-                phone: document.getElementById('phone').value,
+                name: name,
+                phone: phone,
                 gender: document.getElementById('gender').value,
-                age: document.getElementById('age').value,
-                date: document.getElementById('date').value,
-                time: document.getElementById('time').value
+                age: age,
+                date: date,
+                time: time
             };
 
-            const response = await fetch(`${API_URL}/book`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(data),
-            });
+            try {
+                const response = await fetch(`${API_URL}/book`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(data),
+                });
 
-            const result = await response.json();
-            if (response.ok) {
-                const waitingTimeResponse = await fetch(`${API_URL}/waiting-time`);
-                const waitingTimeResult = await waitingTimeResponse.json();
+                const result = await response.json();
+                if (response.ok) {
+                    confirmationMessage.classList.remove('error');
+                    confirmationMessage.classList.add('success');
+                    confirmationMessage.innerHTML = 'تم حجز الموعد بنجاح!';
 
-                document.getElementById('confirmationMessage').innerHTML = `
-                    تم حجز الموعد بنجاح!<br>
-                    زمن المقابلة المتوقع: ${waitingTimeResult.waiting_time_minutes} دقيقة.
-                `;
-                document.getElementById('confirmationMessage').style.display = 'block';
+                    // إظهار الرسالة
+                    confirmationMessage.style.display = 'block';
 
-                setTimeout(() => {
-                    document.getElementById('confirmationMessage').style.display = 'none';
-                }, 5000);
+                    // إخفاء الرسالة بعد 5 ثوانٍ
+                    setTimeout(() => {
+                        confirmationMessage.style.display = 'none';
+                    }, 5000);
 
-                document.getElementById('bookingForm').reset();
-            } else {
-                alert(result.error || 'حدث خطأ أثناء حجز الموعد!');
+                    document.getElementById('bookingForm').reset();
+                } else {
+                    confirmationMessage.classList.remove('success');
+                    confirmationMessage.classList.add('error');
+                    confirmationMessage.innerHTML = result.error || 'حدث خطأ أثناء حجز الموعد!';
+                    confirmationMessage.style.display = 'block';
+
+                    setTimeout(() => {
+                        confirmationMessage.style.display = 'none';
+                    }, 5000);
+                }
+            } catch (error) {
+                alert('حدث خطأ في الاتصال بالخادم. الرجاء المحاولة مرة أخرى.');
+            } finally {
+                // إعادة تمكين الزر وإخفاء مؤشر التحميل
+                submitButton.disabled = false;
+                submitButton.innerText = 'احجز الآن';
+                loadingSpinner.style.display = 'none';
             }
         });
     </script>
 </body>
-    </html>
+</html>
