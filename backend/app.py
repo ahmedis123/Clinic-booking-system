@@ -4,7 +4,7 @@ import os
 import uuid
 from flask_cors import CORS
 
-app = Flask(__name__, template_folder='../frontend/patient')
+app = Flask(__name__, template_folder='../frontend')  # قم بتعيين template_folder إلى المجلد الرئيسي (frontend)
 CORS(app)
 
 # مسار ملف CSV
@@ -131,18 +131,16 @@ def get_waiting_time():
 # واجهة المريض
 @app.route('/')
 def index():
-    return render_template('index.html')  # ملف index.html في frontend/patient/
+    return render_template('patient/index.html')  # ملف index.html في frontend/patient/
 
 @app.route('/patient')
 def patient():
-    return render_template('index.html')  # ملف index.html في frontend/patient/
+    return render_template('patient/index.html')  # ملف index.html في frontend/patient/
 
 # واجهة الإدارة
 @app.route('/admin')
 def admin():
-    # تغيير المسار المؤقت للقوالب إلى frontend/admin/
-    app.template_folder = '../frontend/admin'
-    return render_template('admin.html')  # ملف admin.html في frontend/admin/
+    return render_template('admin/admin.html')  # ملف admin.html في frontend/admin/
 
 # تشغيل الخادم
 if __name__ == '__main__':
