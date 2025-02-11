@@ -8,13 +8,13 @@ app = Flask(__name__, template_folder='../frontend')  # قم بتعيين templa
 CORS(app)
 
 # مسار ملف CSV
-CSV_FILE = 'appointments.csv'
+CSV_FILE = 'students.csv'
 
 # إنشاء ملف CSV إذا لم يكن موجودًا
 if not os.path.exists(CSV_FILE):
     with open(CSV_FILE, mode='w', newline='', encoding='utf-8') as file:
         writer = csv.writer(file)
-        writer.writerow(['id', 'الاسم', 'رقم الهاتف', 'النوع', 'العمر', 'التاريخ', 'الوقت', 'الحالة'])
+        writer.writerow(['id', 'الاسم', 'الوشاح', 'الهاشتاق', 'المقاس', 'النوع', 'الحالة'])
 
 # بيانات تسجيل دخول الإدارة
 ADMIN_CREDENTIALS = {
@@ -22,13 +22,13 @@ ADMIN_CREDENTIALS = {
     "password": "admin123"
 }
 
-# تحقق من صحة رقم الهاتف
-def validate_phone(phone):
-    return phone.isdigit() and len(phone) == 10
+# تحقق من صحة الهاشتاق
+def validate_hashtag(hashtag):
+    return len(hashtag) > 0
 
-# تحقق من صحة العمر
-def validate_age(age):
-    return age.isdigit() and 0 < int(age) < 120
+# تحقق من صحة الوشاح
+def validate_scarf(scarf):
+    return len(scarf) > 0
 
 # API لتسجيل دخول الإدارة
 @app.route('/api/admin/login', methods=['POST'])
@@ -42,100 +42,97 @@ def admin_login():
     else:
         return jsonify({'error': 'اسم المستخدم أو كلمة المرور غير صحيحة!'}), 401
 
-# API لحجز موعد
-@app.route('/api/book', methods=['POST'])
-def book_appointment():
+# API لتسجيل الطالب
+@app.route('/api/register', methods=['POST'])
+def register_student():
     data = request.json
     name = data.get('name')
-    phone = data.get('phone')
+    scarf = data.get('scarf')
+    hashtag = data.get('hashtag')
+    size = data.get('size')
     gender = data.get('gender')
-    age = data.get('age')
-    date = data.get('date')
-    time = data.get('time')
 
-    if not all([name, phone, gender, age, date, time]):
+    if not all([name, scarf, hashtag, size, gender]):
         return jsonify({'error': 'جميع الحقول مطلوبة!'}), 400
 
-    if not validate_phone(phone):
-        return jsonify({'error': 'رقم الهاتف غير صحيح!'}), 400
+    if not validate_scarf(scarf):
+        return jsonify({'error': 'الوشاح غير صحيح!'}), 400
 
-    if not validate_age(age):
-        return jsonify({'error': 'العمر غير صحيح!'}), 400
+    if not validate_hashtag(hashtag):
+        return jsonify({'error': 'الهاشتاق غير صحيح!'}), 400
 
-    appointment_id = str(uuid.uuid4())
+    student_id = str(uuid.uuid4())
 
     with open(CSV_FILE, mode='a', newline='', encoding='utf-8') as file:
         writer = csv.writer(file)
-        writer.writerow([appointment_id, name, phone, gender, age, date, time, 'معلق'])
+        writer.writerow([student_id, name, scarf, hashtag, size, gender, 'تم التسجيل'])
 
-    return jsonify({'message': 'تم حجز الموعد بنجاح!', 'id': appointment_id}), 201
+    return jsonify({'message': 'تم تسجيل الطالب بنجاح!', 'id': student_id}), 201
 
-# API لاسترجاع جميع المواعيد
-@app.route('/api/admin/appointments', methods=['GET'])
-def get_all_appointments():
-    appointments = []
+# API لاسترجاع جميع الطلاب
+@app.route('/api/admin/students', methods=['GET'])
+def get_all_students():
+    students = []
 
     with open(CSV_FILE, mode='r', encoding='utf-8') as file:
         reader = csv.reader(file)
         next(reader)  # تخطي الصف الأول (العناوين)
         for row in reader:
-            appointments.append({
+            students.append({
                 'id': row[0],
                 'name': row[1],
-                'phone': row[2],
-                'gender': row[3],
-                'age': row[4],
-                'date': row[5],
-                'time': row[6],
-                'status': row[7]
+                'scarf': row[2],
+                'hashtag': row[3],
+                'size': row[4],
+                'gender': row[5],
+                'status': row[6]
             })
 
-    return jsonify(appointments), 200
+    return jsonify(students), 200
 
-# API لتأكيد أو إلغاء الموعد
-@app.route('/api/admin/appointments/<appointment_id>', methods=['PUT'])
-def update_appointment_status(appointment_id):
+# API لتحديث حالة الطالب
+@app.route('/api/admin/students/<student_id>', methods=['PUT'])
+def update_student_status(student_id):
     data = request.json
-    new_status = data.get('status')  # 'مؤكد' أو 'ملغى'
+    new_status = data.get('status')  # 'تم التسجيل' أو 'غير مؤكد'
 
-    appointments = []
+    students = []
 
     with open(CSV_FILE, mode='r', encoding='utf-8') as file:
         reader = csv.reader(file)
         headers = next(reader)  # قراءة العناوين
         for row in reader:
-            if row[0] == appointment_id:  # تحديث حالة الموعد
-                row[7] = new_status
-            appointments.append(row)
+            if row[0] == student_id:  # تحديث حالة الطالب
+                row[6] = new_status
+            students.append(row)
 
     with open(CSV_FILE, mode='w', newline='', encoding='utf-8') as file:
         writer = csv.writer(file)
         writer.writerow(headers)  # كتابة العناوين
-        writer.writerows(appointments)  # كتابة البيانات المحدثة
+        writer.writerows(students)  # كتابة البيانات المحدثة
 
-    return jsonify({'message': 'تم تحديث حالة الموعد بنجاح!'}), 200
+    return jsonify({'message': 'تم تحديث حالة الطالب بنجاح!'}), 200
 
-# API لحساب زمن المقابلة
-@app.route('/api/waiting-time', methods=['GET'])
-def get_waiting_time():
+# API لحساب عدد الطلاب المسجلين
+@app.route('/api/students-count', methods=['GET'])
+def get_students_count():
     with open(CSV_FILE, mode='r', encoding='utf-8') as file:
         reader = csv.reader(file)
         next(reader)  # تخطي الصف الأول (العناوين)
-        appointments = list(reader)
+        students = list(reader)
 
-    num_appointments = len(appointments)
-    waiting_time_minutes = num_appointments * 15
+    num_students = len(students)
 
-    return jsonify({'waiting_time_minutes': waiting_time_minutes}), 200
+    return jsonify({'students_count': num_students}), 200
 
-# واجهة المريض
+# واجهة الطالب
 @app.route('/')
 def index():
-    return render_template('patient/index.html')  # ملف index.html في frontend/patient/
+    return render_template('student/index.html')  # ملف index.html في frontend/student/
 
-@app.route('/patient')
-def patient():
-    return render_template('patient/index.html')  # ملف index.html في frontend/patient/
+@app.route('/student')
+def student():
+    return render_template('student/index.html')  # ملف index.html في frontend/student/
 
 # واجهة الإدارة
 @app.route('/admin')
