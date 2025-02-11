@@ -156,7 +156,8 @@
         <form id="registrationForm">
             <label for="name">الاسم:</label>
             <input type="text" id="name" required>
-
+<label for="phone">رقم الهاتف:</label>
+<input type="tel" id="phone" required pattern="[0-9]{10}" title="يجب إدخال رقم هاتف مكون من 10 أرقام">
             <label for="scarf">نص الوشاح:</label>
             <input type="text" id="scarf" required>
 
@@ -260,6 +261,7 @@
         }
     });
 </script>
+
 
 </body>
 </html>
