@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>إدارة المواعيد - العيادة</title>
+    <title>إدارة طلبات الخريجين</title>
     <style>
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -134,9 +134,9 @@
                 min-width: 100%;
             }
 
-            th:nth-child(4), td:nth-child(4),
             th:nth-child(5), td:nth-child(5),
-            th:nth-child(6), td:nth-child(6) {
+            th:nth-child(6), td:nth-child(6),
+            th:nth-child(7), td:nth-child(7) {
                 display: none;
             }
         }
@@ -152,7 +152,7 @@
                 font-size: 10px;
             }
 
-            th:nth-child(3), td:nth-child(3) {
+            th:nth-child(4), td:nth-child(4) {
                 display: none;
             }
         }
@@ -160,26 +160,26 @@
 </head>
 <body>
     <div class="container">
-        <h1>إدارة المواعيد - العيادة</h1>
+        <h1>إدارة طلبات الخريجين</h1>
 
         <!-- رسالة تحميل أثناء انتظار تحميل البيانات -->
-        <div id="loadingMessage" class="loading">جارٍ تحميل المواعيد...</div>
+        <div id="loadingMessage" class="loading">جارٍ تحميل الطلبات...</div>
 
-        <table id="appointmentsTable">
+        <table id="graduatesTable">
             <thead>
                 <tr>
                     <th>الاسم</th>
                     <th>رقم الهاتف</th>
+                    <th>المقاس</th>
+                    <th>نص الوشاح</th>
+                    <th>نص الهاشتاق</th>
                     <th>النوع</th>
-                    <th>العمر</th>
-                    <th>التاريخ</th>
-                    <th>الوقت</th>
                     <th>الحالة</th>
                     <th>الإجراءات</th>
                 </tr>
             </thead>
             <tbody>
-                <!-- المواعيد سيتم إضافتها هنا -->
+                <!-- الطلبات سيتم إضافتها هنا -->
             </tbody>
         </table>
     </div>
@@ -187,51 +187,51 @@
     <script>
         const API_URL = 'https://clinic-booking-system-opre.onrender.com/api';
 
-        document.addEventListener('DOMContentLoaded', loadAppointments);
+        document.addEventListener('DOMContentLoaded', loadGraduateRequests);
 
-        async function loadAppointments() {
+        async function loadGraduateRequests() {
             try {
-                const response = await fetch(`${API_URL}/admin/appointments`);
-                const appointments = await response.json();
-                const tableBody = document.querySelector('#appointmentsTable tbody');
+                const response = await fetch(`${API_URL}/admin/graduate-requests`);
+                const requests = await response.json();
+                const tableBody = document.querySelector('#graduatesTable tbody');
                 const loadingMessage = document.getElementById('loadingMessage');
                 tableBody.innerHTML = '';
 
-                if (appointments.length === 0) {
-                    tableBody.innerHTML = '<tr><td colspan="8">لا توجد مواعيد حالياً.</td></tr>';
+                if (requests.length === 0) {
+                    tableBody.innerHTML = '<tr><td colspan="8">لا توجد طلبات حالياً.</td></tr>';
                 }
 
-                appointments.forEach(appointment => {
+                requests.forEach(request => {
                     const row = document.createElement('tr');
                     row.innerHTML = `
-                        <td>${appointment.name}</td>
-                        <td>${appointment.phone}</td>
-                        <td>${appointment.gender}</td>
-                        <td>${appointment.age}</td>
-                        <td>${appointment.date}</td>
-                        <td>${appointment.time}</td>
-                        <td class="status-${appointment.status === 'معلق' ? 'pending' : appointment.status === 'مؤكد' ? 'confirmed' : 'cancelled'}">
-                            ${appointment.status}
+                        <td>${request.name}</td>
+                        <td>${request.phone}</td>
+                        <td>${request.size}</td>
+                        <td>${request.scarfText}</td>
+                        <td>${request.hashtagText}</td>
+                        <td>${request.gender}</td>
+                        <td class="status-${request.status === 'معلق' ? 'pending' : request.status === 'مؤكد' ? 'confirmed' : 'ملغى'}">
+                            ${request.status}
                         </td>
                         <td>
-                            <button class="confirm-button" onclick="updateAppointmentStatus('${appointment.id}', 'مؤكد')">تأكيد</button>
-                            <button class="cancel-button" onclick="updateAppointmentStatus('${appointment.id}', 'ملغى')">إلغاء</button>
+                            <button class="confirm-button" onclick="updateGraduateRequestStatus('${request.id}', 'مؤكد')">تأكيد</button>
+                            <button class="cancel-button" onclick="updateGraduateRequestStatus('${request.id}', 'ملغى')">إلغاء</button>
                         </td>
                     `;
                     tableBody.appendChild(row);
                 });
             } catch (error) {
-                console.error('حدث خطأ أثناء تحميل المواعيد:', error);
-                const tableBody = document.querySelector('#appointmentsTable tbody');
+                console.error('حدث خطأ أثناء تحميل الطلبات:', error);
+                const tableBody = document.querySelector('#graduatesTable tbody');
                 tableBody.innerHTML = '<tr><td colspan="8">حدث خطأ في تحميل البيانات. يرجى المحاولة لاحقًا.</td></tr>';
             } finally {
                 document.getElementById('loadingMessage').style.display = 'none';
             }
         }
 
-        async function updateAppointmentStatus(id, status) {
+        async function updateGraduateRequestStatus(id, status) {
             try {
-                const response = await fetch(`${API_URL}/admin/appointments/${id}`, {
+                const response = await fetch(`${API_URL}/admin/graduate-requests/${id}`, {
                     method: 'PUT',
                     headers: {
                         'Content-Type': 'application/json',
@@ -240,14 +240,15 @@
                 });
 
                 if (response.ok) {
-                    loadAppointments();
+                    loadGraduateRequests();
                 } else {
-                    alert('حدث خطأ أثناء تحديث حالة الموعد!');
+                    alert('حدث خطأ أثناء تحديث حالة الطلب!');
                 }
             } catch (error) {
-                console.error('حدث خطأ أثناء تحديث حالة الموعد:', error);
+                console.error('حدث خطأ أثناء تحديث حالة الطلب:', error);
             }
         }
     </script>
+
 </body>
 </html>
