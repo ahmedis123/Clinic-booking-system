@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>حجز موعد في العيادة</title>
+    <title>تسجيل الطلاب المتخرجين</title>
     <style>
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -14,150 +14,164 @@
             color: #333;
             font-size: 16px;
             line-height: 1.6;
-        }
+        }.header {
+        width: 100%;
+        height: 300px;
+        overflow: hidden;
+        position: relative;
+    }
 
+    .header img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        object-position: center;
+    }
+
+    .container {
+        max-width: 600px;
+        margin: 20px auto;
+        padding: 30px;
+        background: #fff;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        border-radius: 12px;
+        position: relative;
+        top: -50px;
+    }
+
+    h1 {
+        color: #2c3e50;
+        text-align: center;
+        margin-bottom: 30px;
+        font-size: 28px;
+        font-weight: 600;
+    }
+
+    form {
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+    }
+
+    label {
+        font-weight: 500;
+        margin-bottom: 8px;
+        font-size: 14px;
+    }
+
+    input, select, button {
+        width: 100%;
+        padding: 12px;
+        border: 1px solid #ccc;
+        border-radius: 6px;
+        font-size: 14px;
+        box-sizing: border-box;
+        transition: border-color 0.3s ease, box-shadow 0.3s ease;
+    }
+
+    input:focus, select:focus {
+        border-color: #28a745;
+        box-shadow: 0 0 8px rgba(40, 167, 69, 0.2);
+        outline: none;
+    }
+
+    button {
+        background-color: #28a745;
+        color: #fff;
+        border: none;
+        cursor: pointer;
+        font-size: 16px;
+        padding: 12px;
+        border-radius: 6px;
+        transition: background-color 0.3s ease;
+    }
+
+    button:hover {
+        background-color: #218838;
+    }
+
+    button:disabled {
+        background-color: #ccc;
+        cursor: not-allowed;
+    }
+
+    #confirmationMessage {
+        display: none;
+        padding: 15px;
+        border-radius: 6px;
+        text-align: center;
+        font-size: 14px;
+        margin-top: 10px;
+    }
+
+    .success {
+        background-color: #d4edda;
+        color: #155724;
+    }
+
+    .error {
+        background-color: #f8d7da;
+        color: #721c24;
+    }
+
+    .loading-spinner {
+        border: 4px solid #f3f3f3;
+        border-top: 4px solid #28a745;
+        border-radius: 50%;
+        width: 30px;
+        height: 30px;
+        animation: spin 1s linear infinite;
+        margin: 0 auto;
+        display: none;
+    }
+
+    @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+
+    @media (max-width: 768px) {
         .header {
-            width: 100%;
-            height: 300px;
-            overflow: hidden;
-            position: relative;
-        }
-
-        .header img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            object-position: center;
+            height: 200px;
         }
 
         .container {
-            max-width: 600px;
-            margin: 20px auto;
-            padding: 30px;
-            background: #fff;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-            border-radius: 12px;
-            position: relative;
-            top: -50px;
+            top: -30px;
         }
+    }
+</style>
 
-        h1 {
-            color: #2c3e50;
-            text-align: center;
-            margin-bottom: 30px;
-            font-size: 28px;
-            font-weight: 600;
-        }
-
-        form {
-            display: flex;
-            flex-direction: column;
-            gap: 20px;
-        }
-
-        label {
-            font-weight: 500;
-            margin-bottom: 8px;
-            font-size: 14px;
-        }
-
-        input, select, button {
-            width: 100%;
-            padding: 12px;
-            border: 1px solid #ccc;
-            border-radius: 6px;
-            font-size: 14px;
-            box-sizing: border-box;
-            transition: border-color 0.3s ease, box-shadow 0.3s ease;
-        }
-
-        input:focus, select:focus {
-            border-color: #28a745;
-            box-shadow: 0 0 8px rgba(40, 167, 69, 0.2);
-            outline: none;
-        }
-
-        button {
-            background-color: #28a745;
-            color: #fff;
-            border: none;
-            cursor: pointer;
-            font-size: 16px;
-            padding: 12px;
-            border-radius: 6px;
-            transition: background-color 0.3s ease;
-        }
-
-        button:hover {
-            background-color: #218838;
-        }
-
-        button:disabled {
-            background-color: #ccc;
-            cursor: not-allowed;
-        }
-
-        #confirmationMessage {
-            display: none;
-            padding: 15px;
-            border-radius: 6px;
-            text-align: center;
-            font-size: 14px;
-            margin-top: 10px;
-        }
-
-        .success {
-            background-color: #d4edda;
-            color: #155724;
-        }
-
-        .error {
-            background-color: #f8d7da;
-            color: #721c24;
-        }
-
-        .loading-spinner {
-            border: 4px solid #f3f3f3;
-            border-top: 4px solid #28a745;
-            border-radius: 50%;
-            width: 30px;
-            height: 30px;
-            animation: spin 1s linear infinite;
-            margin: 0 auto;
-            display: none;
-        }
-
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-
-        @media (max-width: 768px) {
-            .header {
-                height: 200px;
-            }
-
-            .container {
-                top: -30px;
-            }
-        }
-    </style>
 </head>
 <body>
-    <div class="header">
-        <img src="https://images.unsplash.com/photo-1538108149393-fbbd81895907?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80" alt="صورة العيادة">
+      <div style="text-align: center; font-size: 24px; font-weight: bold; margin: 20px 0; color: #2c3e50;">
+        شركة توينز استار
     </div>
-    
+    <div class="header">
+        <img src="https://images.unsplash.com/photo-1523050854058-8df90110c9f1?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80" alt="صورة الطلاب المتخرجين">
+    </div>
     <div class="container">
-        <h1>مرحبًا بكم في عيادة الأمل</h1>
-        
-        <!-- نموذج الحجز -->
-        <form id="bookingForm">
+        <h1>تسجيل الطلاب المتخرجين</h1>
+
+        <!-- نموذج التسجيل -->
+        <form id="registrationForm">
             <label for="name">الاسم:</label>
             <input type="text" id="name" required>
 
-            <label for="phone">رقم الهاتف:</label>
-            <input type="text" id="phone" required>
+            <label for="scarf">نص الوشاح:</label>
+            <input type="text" id="scarf" required>
+
+            <label for="hashtag">نص الهاشتاق:</label>
+            <input type="text" id="hashtag" required>
+
+            <label for="size">المقاس:</label>
+            <select id="size" required>
+                <option value="S">S</option>
+                <option value="M">M</option>
+                <option value="L">L</option>
+                <option value="XL">XL</option>
+                <option value="XXL">XXL</option>
+                <option value="XXXL">XXXL</option>
+            </select>
 
             <label for="gender">النوع:</label>
             <select id="gender" required>
@@ -165,16 +179,7 @@
                 <option value="أنثى">أنثى</option>
             </select>
 
-            <label for="age">العمر:</label>
-            <input type="number" id="age" required>
-
-            <label for="date">التاريخ:</label>
-            <input type="date" id="date" required>
-
-            <label for="time">الوقت:</label>
-            <input type="time" id="time" required>
-
-            <button type="submit" id="submitButton">احجز الآن</button>
+            <button type="submit" id="submitButton">تسجيل</button>
             <div class="loading-spinner" id="loadingSpinner"></div>
         </form>
 
@@ -182,108 +187,79 @@
         <div id="confirmationMessage"></div>
     </div>
 
-    <script>
-        const API_URL = 'https://clinic-booking-system-opre.onrender.com/api';
+<script>
+    const API_URL = 'https://student-registration-system.example.com/api';
 
-        document.getElementById('bookingForm').addEventListener('submit', async function (e) {
-            e.preventDefault();
+    document.getElementById('registrationForm').addEventListener('submit', async function (e) {
+        e.preventDefault();
 
-            const submitButton = document.getElementById('submitButton');
-            const loadingSpinner = document.getElementById('loadingSpinner');
-            const confirmationMessage = document.getElementById('confirmationMessage');
+        const submitButton = document.getElementById('submitButton');
+        const loadingSpinner = document.getElementById('loadingSpinner');
+        const confirmationMessage = document.getElementById('confirmationMessage');
 
-            // تعطيل الزر وإظهار مؤشر التحميل
-            submitButton.disabled = true;
-            submitButton.innerText = 'جارٍ المعالجة...';
-            loadingSpinner.style.display = 'block';
+        // تعطيل الزر وإظهار مؤشر التحميل
+        submitButton.disabled = true;
+        submitButton.innerText = 'جارٍ التسجيل...';
+        loadingSpinner.style.display = 'block';
 
-            const name = document.getElementById('name').value;
-            const phone = document.getElementById('phone').value;
-            const age = document.getElementById('age').value;
-            const date = document.getElementById('date').value;
-            const time = document.getElementById('time').value;
+        const name = document.getElementById('name').value;
+        const scarf = document.getElementById('scarf').value;
+        const hashtag = document.getElementById('hashtag').value;
+        const size = document.getElementById('size').value;
+        const gender = document.getElementById('gender').value;
 
-            // التحقق من صحة رقم الهاتف
-            if (!/^\d+$/.test(phone)) {
-                alert('رقم الهاتف يجب أن يحتوي على أرقام فقط');
-                submitButton.disabled = false;
-                submitButton.innerText = 'احجز الآن';
-                loadingSpinner.style.display = 'none';
-                return;
+        const data = {
+            name: name,
+            scarf: scarf,
+            hashtag: hashtag,
+            size: size,
+            gender: gender
+        };
+
+        try {
+            const response = await fetch(`${API_URL}/register`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(data),
+            });
+
+            const result = await response.json();
+            if (response.ok) {
+                confirmationMessage.classList.remove('error');
+                confirmationMessage.classList.add('success');
+                confirmationMessage.innerHTML = 'تم تسجيل الطالب بنجاح!';
+
+                // إظهار الرسالة
+                confirmationMessage.style.display = 'block';
+
+                // إخفاء الرسالة بعد 5 ثوانٍ
+                setTimeout(() => {
+                    confirmationMessage.style.display = 'none';
+                }, 5000);
+
+                document.getElementById('registrationForm').reset();
+            } else {
+                confirmationMessage.classList.remove('success');
+                confirmationMessage.classList.add('error');
+                confirmationMessage.innerHTML = result.error || 'حدث خطأ أثناء التسجيل!';
+                confirmationMessage.style.display = 'block';
+
+                setTimeout(() => {
+                    confirmationMessage.style.display = 'none';
+                }, 5000);
             }
+        } catch (error) {
+            alert('حدث خطأ في الاتصال بالخادم. الرجاء المحاولة مرة أخرى.');
+        } finally {
+            // إعادة تمكين الزر وإخفاء مؤشر التحميل
+            submitButton.disabled = false;
+            submitButton.innerText = 'تسجيل';
+            loadingSpinner.style.display = 'none';
+        }
+    });
+</script>
 
-            // التحقق من صحة العمر
-            if (age <= 0 || age > 120) {
-                alert('العمر يجب أن يكون بين 1 و 120');
-                submitButton.disabled = false;
-                submitButton.innerText = 'احجز الآن';
-                loadingSpinner.style.display = 'none';
-                return;
-            }
-
-            // التحقق من أن التاريخ والوقت ليسا في الماضي
-            const selectedDateTime = new Date(`${date}T${time}`);
-            const now = new Date();
-            if (selectedDateTime < now) {
-                alert('الرجاء اختيار تاريخ ووقت في المستقبل');
-                submitButton.disabled = false;
-                submitButton.innerText = 'احجز الآن';
-                loadingSpinner.style.display = 'none';
-                return;
-            }
-
-            const data = {
-                name: name,
-                phone: phone,
-                gender: document.getElementById('gender').value,
-                age: age,
-                date: date,
-                time: time
-            };
-
-            try {
-                const response = await fetch(`${API_URL}/book`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify(data),
-                });
-
-                const result = await response.json();
-                if (response.ok) {
-                    confirmationMessage.classList.remove('error');
-                    confirmationMessage.classList.add('success');
-                    confirmationMessage.innerHTML = 'تم حجز الموعد بنجاح!';
-
-                    // إظهار الرسالة
-                    confirmationMessage.style.display = 'block';
-
-                    // إخفاء الرسالة بعد 5 ثوانٍ
-                    setTimeout(() => {
-                        confirmationMessage.style.display = 'none';
-                    }, 5000);
-
-                    document.getElementById('bookingForm').reset();
-                } else {
-                    confirmationMessage.classList.remove('success');
-                    confirmationMessage.classList.add('error');
-                    confirmationMessage.innerHTML = result.error || 'حدث خطأ أثناء حجز الموعد!';
-                    confirmationMessage.style.display = 'block';
-
-                    setTimeout(() => {
-                        confirmationMessage.style.display = 'none';
-                    }, 5000);
-                }
-            } catch (error) {
-                alert('حدث خطأ في الاتصال بالخادم. الرجاء المحاولة مرة أخرى.');
-            } finally {
-                // إعادة تمكين الزر وإخفاء مؤشر التحميل
-                submitButton.disabled = false;
-                submitButton.innerText = 'احجز الآن';
-                loadingSpinner.style.display = 'none';
-            }
-        });
-    </script>
 </body>
 </html>
