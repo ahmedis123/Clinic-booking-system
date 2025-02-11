@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>إدارة طلبات الخريجين</title>
+    <title>إدارة طلبات الطلاب</title>
     <style>
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -58,18 +58,13 @@
             transition: background-color 0.3s ease;
         }
 
-        .status-pending {
-            color: #ffc107;
-            font-weight: 500;
-        }
-
-        .status-confirmed {
+        .status-registered {
             color: #28a745;
             font-weight: 500;
         }
 
-        .status-cancelled {
-            color: #dc3545;
+        .status-unconfirmed {
+            color: #ffc107;
             font-weight: 500;
         }
 
@@ -160,19 +155,18 @@
 </head>
 <body>
     <div class="container">
-        <h1>إدارة طلبات الخريجين</h1>
+        <h1>إدارة طلبات الطلاب</h1>
 
         <!-- رسالة تحميل أثناء انتظار تحميل البيانات -->
         <div id="loadingMessage" class="loading">جارٍ تحميل الطلبات...</div>
 
-        <table id="graduatesTable">
+        <table id="studentsTable">
             <thead>
                 <tr>
                     <th>الاسم</th>
-                    <th>رقم الهاتف</th>
+                    <th>الوشاح</th>
+                    <th>الهاشتاق</th>
                     <th>المقاس</th>
-                    <th>نص الوشاح</th>
-                    <th>نص الهاشتاق</th>
                     <th>النوع</th>
                     <th>الحالة</th>
                     <th>الإجراءات</th>
@@ -185,53 +179,52 @@
     </div>
 
     <script>
-        const API_URL = 'https://clinic-booking-system-opre.onrender.com/api';
+        const API_URL = 'https://clinic-booking-system-opre.onrender.com/api';  // تأكد من تغيير هذا الرابط ليناسب عنوان الخادم الخاص بك
 
-        document.addEventListener('DOMContentLoaded', loadGraduateRequests);
+        document.addEventListener('DOMContentLoaded', loadStudents);
 
-        async function loadGraduateRequests() {
+        async function loadStudents() {
             try {
-                const response = await fetch(`${API_URL}/admin/graduate-requests`);
-                const requests = await response.json();
-                const tableBody = document.querySelector('#graduatesTable tbody');
+                const response = await fetch(`${API_URL}/admin/students`);
+                const students = await response.json();
+                const tableBody = document.querySelector('#studentsTable tbody');
                 const loadingMessage = document.getElementById('loadingMessage');
                 tableBody.innerHTML = '';
 
-                if (requests.length === 0) {
-                    tableBody.innerHTML = '<tr><td colspan="8">لا توجد طلبات حالياً.</td></tr>';
+                if (students.length === 0) {
+                    tableBody.innerHTML = '<tr><td colspan="7">لا توجد طلبات حالياً.</td></tr>';
                 }
 
-                requests.forEach(request => {
+                students.forEach(student => {
                     const row = document.createElement('tr');
                     row.innerHTML = `
-                        <td>${request.name}</td>
-                        <td>${request.phone}</td>
-                        <td>${request.size}</td>
-                        <td>${request.scarfText}</td>
-                        <td>${request.hashtagText}</td>
-                        <td>${request.gender}</td>
-                        <td class="status-${request.status === 'معلق' ? 'pending' : request.status === 'مؤكد' ? 'confirmed' : 'ملغى'}">
-                            ${request.status}
+                        <td>${student.name}</td>
+                        <td>${student.scarf}</td>
+                        <td>${student.hashtag}</td>
+                        <td>${student.size}</td>
+                        <td>${student.gender}</td>
+                        <td class="status-${student.status === 'تم التسجيل' ? 'registered' : 'unconfirmed'}">
+                            ${student.status}
                         </td>
                         <td>
-                            <button class="confirm-button" onclick="updateGraduateRequestStatus('${request.id}', 'مؤكد')">تأكيد</button>
-                            <button class="cancel-button" onclick="updateGraduateRequestStatus('${request.id}', 'ملغى')">إلغاء</button>
+                            <button class="confirm-button" onclick="updateStudentStatus('${student.id}', 'تم التسجيل')">تأكيد</button>
+                            <button class="cancel-button" onclick="updateStudentStatus('${student.id}', 'غير مؤكد')">إلغاء</button>
                         </td>
                     `;
                     tableBody.appendChild(row);
                 });
             } catch (error) {
                 console.error('حدث خطأ أثناء تحميل الطلبات:', error);
-                const tableBody = document.querySelector('#graduatesTable tbody');
-                tableBody.innerHTML = '<tr><td colspan="8">حدث خطأ في تحميل البيانات. يرجى المحاولة لاحقًا.</td></tr>';
+                const tableBody = document.querySelector('#studentsTable tbody');
+                tableBody.innerHTML = '<tr><td colspan="7">حدث خطأ في تحميل البيانات. يرجى المحاولة لاحقًا.</td></tr>';
             } finally {
                 document.getElementById('loadingMessage').style.display = 'none';
             }
         }
 
-        async function updateGraduateRequestStatus(id, status) {
+        async function updateStudentStatus(id, status) {
             try {
-                const response = await fetch(`${API_URL}/admin/graduate-requests/${id}`, {
+                const response = await fetch(`${API_URL}/admin/students/${id}`, {
                     method: 'PUT',
                     headers: {
                         'Content-Type': 'application/json',
@@ -240,15 +233,14 @@
                 });
 
                 if (response.ok) {
-                    loadGraduateRequests();
+                    loadStudents();
                 } else {
-                    alert('حدث خطأ أثناء تحديث حالة الطلب!');
+                    alert('حدث خطأ أثناء تحديث حالة الطالب!');
                 }
             } catch (error) {
-                console.error('حدث خطأ أثناء تحديث حالة الطلب:', error);
+                console.error('حدث خطأ أثناء تحديث حالة الطالب:', error);
             }
         }
     </script>
-
 </body>
 </html>
