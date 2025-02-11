@@ -128,11 +128,11 @@ def get_students_count():
 # واجهة الطالب
 @app.route('/')
 def index():
-    return render_template('student/index.html')  # ملف index.html في frontend/student/
+    return render_template('patient/index.html')  # ملف index.html في frontend/student/
 
 @app.route('/student')
 def student():
-    return render_template('student/index.html')  # ملف index.html في frontend/student/
+    return render_template('patient/index.html')  # ملف index.html في frontend/student/
 
 # واجهة الإدارة
 @app.route('/admin')
