@@ -99,23 +99,23 @@ def register_student():
 # API لاسترجاع جميع الطلاب
 @app.route('/api/admin/students', methods=['GET'])
 def get_students():
-         headers = {
-             'X-Master-Key': JSONBIN_API_KEY
-         }
-         response = requests.get(JSONBIN_URL, headers=headers)
-         print("Response from jsonbin.io (GET):", response.status_code, response.json())  # Debugging
-         if response.status_code == 200:
-             return response.json().get('record', [])
-         return []
+    headers = {
+        'X-Master-Key': JSONBIN_API_KEY
+    }
+    response = requests.get(JSONBIN_URL, headers=headers)
+    print("Response from jsonbin.io (GET):", response.status_code, response.json())  # Debugging
+    if response.status_code == 200:
+        return response.json().get('record', [])
+    return []
 
-     def save_students(students):
-         headers = {
-             'Content-Type': 'application/json',
-             'X-Master-Key': JSONBIN_API_KEY
-         }
-         response = requests.put(JSONBIN_URL, json=students, headers=headers)
-         print("Response from jsonbin.io (PUT):", response.status_code, response.json())  # Debugging
-         return response.status_code == 200
+def save_students(students):
+    headers = {
+        'Content-Type': 'application/json',
+        'X-Master-Key': JSONBIN_API_KEY
+    }
+    response = requests.put(JSONBIN_URL, json=students, headers=headers)
+    print("Response from jsonbin.io (PUT):", response.status_code, response.json())  # Debugging
+    return response.status_code == 200
 
 # API لتحديث حالة الطالب
 @app.route('/api/admin/students/<student_id>', methods=['PUT'])
