@@ -1,20 +1,18 @@
 from flask import Flask, render_template, request, jsonify
-import csv
 import os
 import uuid
 from flask_cors import CORS
+import requests
 
 app = Flask(__name__, template_folder='../frontend')  # قم بتعيين template_folder إلى المجلد الرئيسي (frontend)
 CORS(app)
 
-# مسار ملف CSV
-CSV_FILE = 'students.csv'
+# مفتاح API لـ jsonbin.io
+JSONBIN_API_KEY = '$2a$10$JElruOnxtw0rMry11o3DR.afE/vN5q1TNW.0o36grKXpZJdhbNrzu'
+JSONBIN_BIN_ID = '67af5bcfad19ca34f803a957'  # معرف الـ Bin الخاص بك
 
-# إنشاء ملف CSV إذا لم يكن موجودًا
-if not os.path.exists(CSV_FILE):
-    with open(CSV_FILE, mode='w', newline='', encoding='utf-8') as file:
-        writer = csv.writer(file)
-        writer.writerow(['id', 'الاسم', 'الوشاح', 'الهاشتاق', 'المقاس', 'النوع', 'الحالة'])
+# عنوان URL لـ jsonbin.io
+JSONBIN_URL = f'https://api.jsonbin.io/v3/b/{JSONBIN_BIN_ID}'
 
 # بيانات تسجيل دخول الإدارة
 ADMIN_CREDENTIALS = {
@@ -29,6 +27,25 @@ def validate_hashtag(hashtag):
 # تحقق من صحة الوشاح
 def validate_scarf(scarf):
     return len(scarf) > 0
+
+# دالة لقراءة البيانات من jsonbin.io
+def get_students():
+    headers = {
+        'X-Master-Key': JSONBIN_API_KEY
+    }
+    response = requests.get(JSONBIN_URL, headers=headers)
+    if response.status_code == 200:
+        return response.json().get('record', [])
+    return []
+
+# دالة لكتابة البيانات إلى jsonbin.io
+def save_students(students):
+    headers = {
+        'Content-Type': 'application/json',
+        'X-Master-Key': JSONBIN_API_KEY
+    }
+    response = requests.put(JSONBIN_URL, json=students, headers=headers)
+    return response.status_code == 200
 
 # API لتسجيل دخول الإدارة
 @app.route('/api/admin/login', methods=['POST'])
@@ -63,31 +80,26 @@ def register_student():
 
     student_id = str(uuid.uuid4())
 
-    with open(CSV_FILE, mode='a', newline='', encoding='utf-8') as file:
-        writer = csv.writer(file)
-        writer.writerow([student_id, name, scarf, hashtag, size, gender, 'تم التسجيل'])
+    students = get_students()
+    students.append({
+        'id': student_id,
+        'name': name,
+        'scarf': scarf,
+        'hashtag': hashtag,
+        'size': size,
+        'gender': gender,
+        'status': 'تم التسجيل'
+    })
 
-    return jsonify({'message': 'تم تسجيل الطالب بنجاح!', 'id': student_id}), 201
+    if save_students(students):
+        return jsonify({'message': 'تم تسجيل الطالب بنجاح!', 'id': student_id}), 201
+    else:
+        return jsonify({'error': 'حدث خطأ أثناء حفظ البيانات!'}), 500
 
 # API لاسترجاع جميع الطلاب
 @app.route('/api/admin/students', methods=['GET'])
 def get_all_students():
-    students = []
-
-    with open(CSV_FILE, mode='r', encoding='utf-8') as file:
-        reader = csv.reader(file)
-        next(reader)  # تخطي الصف الأول (العناوين)
-        for row in reader:
-            students.append({
-                'id': row[0],
-                'name': row[1],
-                'scarf': row[2],
-                'hashtag': row[3],
-                'size': row[4],
-                'gender': row[5],
-                'status': row[6]
-            })
-
+    students = get_students()
     return jsonify(students), 200
 
 # API لتحديث حالة الطالب
@@ -96,33 +108,22 @@ def update_student_status(student_id):
     data = request.json
     new_status = data.get('status')  # 'تم التسجيل' أو 'غير مؤكد'
 
-    students = []
+    students = get_students()
+    for student in students:
+        if student['id'] == student_id:
+            student['status'] = new_status
+            break
 
-    with open(CSV_FILE, mode='r', encoding='utf-8') as file:
-        reader = csv.reader(file)
-        headers = next(reader)  # قراءة العناوين
-        for row in reader:
-            if row[0] == student_id:  # تحديث حالة الطالب
-                row[6] = new_status
-            students.append(row)
-
-    with open(CSV_FILE, mode='w', newline='', encoding='utf-8') as file:
-        writer = csv.writer(file)
-        writer.writerow(headers)  # كتابة العناوين
-        writer.writerows(students)  # كتابة البيانات المحدثة
-
-    return jsonify({'message': 'تم تحديث حالة الطالب بنجاح!'}), 200
+    if save_students(students):
+        return jsonify({'message': 'تم تحديث حالة الطالب بنجاح!'}), 200
+    else:
+        return jsonify({'error': 'حدث خطأ أثناء حفظ البيانات!'}), 500
 
 # API لحساب عدد الطلاب المسجلين
 @app.route('/api/students-count', methods=['GET'])
 def get_students_count():
-    with open(CSV_FILE, mode='r', encoding='utf-8') as file:
-        reader = csv.reader(file)
-        next(reader)  # تخطي الصف الأول (العناوين)
-        students = list(reader)
-
+    students = get_students()
     num_students = len(students)
-
     return jsonify({'students_count': num_students}), 200
 
 # واجهة الطالب
